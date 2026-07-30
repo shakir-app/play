@@ -5,77 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Game Hub - ระบบจัดเก็บไฟล์เกม</title>
   
-  <!-- 1. Google Fonts: Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- 2. Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Prompt', 'sans-serif'], // กำหนด Prompt เป็น Font หลัก
-          },
+          fontFamily: { sans: ['Prompt', 'sans-serif'] },
         },
       },
     }
   </script>
-
-  <!-- 3. FontAwesome 6 Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <!-- 4. SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <!-- 5. jQuery & DataTables -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   
-  <!-- Custom CSS for DataTable with Tailwind Compatibility -->
   <style>
-    /* ปรับแต่ง DataTable inputs ให้เข้ากับ Tailwind */
     .dataTables_wrapper .dataTables_length select,
     .dataTables_wrapper .dataTables_filter input {
-      border: 1px solid #e5e7eb; /* gray-200 */
-      border-radius: 0.5rem; /* rounded-lg */
-      padding: 0.5rem 0.75rem;
-      margin-bottom: 1rem;
-      outline: none;
-    }
-    .dataTables_wrapper .dataTables_filter input:focus {
-      border-color: #3b82f6; /* blue-500 */
-      ring: 2px;
-      ring-color: #bfdbfe; /* blue-200 */
-    }
-    table.dataTable thead th {
-      border-bottom: 1px solid #e5e7eb; /* gray-200 */
-    }
-    table.dataTable.no-footer {
-      border-bottom: 1px solid #e5e7eb;
-    }
-    /* ปรับแต่ง Pagination */
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-      background: #3b82f6 !important; /* blue-500 */
-      color: white !important;
-      border: 1px solid #3b82f6 !important;
-      border-radius: 0.5rem;
-    }
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-      background: #eff6ff !important; /* blue-50 */
-      color: #1d4ed8 !important; /* blue-700 */
-      border: 1px solid #bfdbfe !important;
+      border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; margin-bottom: 1rem; outline: none;
     }
   </style>
 </head>
 <body class="bg-gray-50 p-4 md:p-8 min-h-screen font-sans text-gray-900">
   
   <div class="max-w-6xl mx-auto">
-    <!-- Header Area -->
     <header class="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
       <div class="flex items-center gap-3">
         <div class="bg-blue-600 text-white p-3 rounded-xl shadow-md">
@@ -86,7 +44,6 @@
       <p class="text-sm text-gray-500 hidden md:block">ระบบจัดเก็บและเล่นเกมส์ออนไลน์ที่สร้างโดย AI</p>
     </header>
 
-    <!-- Upload Card -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 transition hover:shadow-md">
       <div class="flex items-center gap-3 mb-5">
         <i class="fas fa-cloud-upload-alt text-xl text-blue-500"></i>
@@ -106,7 +63,6 @@
       <p class="text-xs text-gray-400 mt-3 pl-1"><i class="fas fa-info-circle mr-1"></i> รองรับเฉพาะไฟล์นามสกุล .html ที่สร้างจาก AI เท่านั้น</p>
     </div>
 
-    <!-- Data Table Card -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
       <div class="flex items-center gap-3 mb-5">
         <i class="fas fa-list-ul text-xl text-gray-500"></i>
@@ -117,57 +73,35 @@
         <table id="gamesTable" class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-gray-50 text-gray-700">
-              <th class="py-4 px-5 font-semibold round-tl-xl rounded-bl-xl">ชื่อไฟล์เกม (คลิกเพื่อเล่น)</th>
-              <th class="py-4 px-5 font-semibold w-48 rounded-tr-xl rounded-br-xl">วันที่อัปโหลด</th>
+              <th class="py-4 px-5 font-semibold">ชื่อไฟล์เกม (คลิกเพื่อเล่นบน GitHub Pages)</th>
+              <th class="py-4 px-5 font-semibold w-48">วันที่อัปโหลด</th>
             </tr>
           </thead>
-          <tbody id="tableBody" class="divide-y divide-gray-100">
-            <!-- Data will be populated here -->
-          </tbody>
+          <tbody id="tableBody" class="divide-y divide-gray-100"></tbody>
         </table>
       </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="text-center mt-12 pt-6 border-t border-gray-100 text-gray-400 text-sm">
-      <p>&copy; 2024 AI Game Hub. Powered by Google Apps Script & GitHub Pages.</p>
-    </footer>
   </div>
 
   <script>
-    // URL ของ Google Apps Script Web App ของคุณ
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-TViIdx2ojOn6oDPISW1X00bGqfb0KtoKyJRzAYz_KusleirahN8SAWlOw75HUNC05w/exec";
 
     let tableInstance = null;
 
-    // Toast configuration สำหรับ SweetAlert2 (แจ้งเตือนมุมจอ)
     const Toast = Swal.mixin({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      didOpen: (toast) => {
-        toast.addEventListener('mouseenter', Swal.stopTimer)
-        toast.addEventListener('mouseleave', Swal.resumeTimer)
-      }
+      toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true
     });
 
     $(document).ready(function() {
-      loadGameList(true); // true = แสดง Loading modal ครั้งแรก
+      loadGameList(true);
     });
 
     async function loadGameList(showLoadingModal = false) {
       let loadingAlert;
       if (showLoadingModal) {
-        // แสดง Loading Modal ของ SweetAlert2
         loadingAlert = Swal.fire({
-          title: 'กำลังโหลดคลังเกมส์...',
-          text: 'โปรดรอสักครู่',
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading()
-          }
+          title: 'กำลังโหลดคลังเกมส์...', allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading() }
         });
       }
       
@@ -175,75 +109,46 @@
         const response = await fetch(`${GAS_WEB_APP_URL}?action=getList`);
         const result = await response.json();
 
-        if (showLoadingModal) loadingAlert.close(); // ปิด Loading modal
+        if (showLoadingModal) loadingAlert.close();
 
         if (result.success) {
-          if (tableInstance) {
-            tableInstance.destroy();
-          }
+          if (tableInstance) tableInstance.destroy();
 
           const tbody = $('#tableBody');
           tbody.empty();
 
           result.data.forEach(file => {
+            // ลิงก์ตรงนี้จะเปิดไฟล์ play.html บน GitHub Pages เอง
+            const playUrl = `play.html?gameId=${file.id}`;
+
             tbody.append(`
               <tr class="hover:bg-blue-50/50 transition-colors">
                 <td class="py-4 px-5">
-                  <a href="${file.playUrl}" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-3 group">
+                  <a href="${playUrl}" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-3 group">
                     <i class="fas fa-play-circle text-lg text-blue-400 group-hover:text-blue-600 transition"></i>
                     <span class="group-hover:underline">${file.name}</span>
                   </a>
                 </td>
-                <td class="py-4 px-5 text-gray-500 text-sm">
-                  <i class="far fa-calendar-alt mr-2 text-gray-300"></i>${file.date}
-                </td>
+                <td class="py-4 px-5 text-gray-500 text-sm">${file.date}</td>
               </tr>
             `);
           });
 
-          // Initialize DataTable
           tableInstance = $('#gamesTable').DataTable({
             language: {
-              search: `<i class="fas fa-search text-gray-400 mr-1"></i> ค้นหาเกม:`,
-              searchPlaceholder: "พิมพ์ชื่อเกม...",
+              search: "ค้นหาเกม:",
               lengthMenu: "แสดง _MENU_ รายการ",
-              info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
-              infoEmpty: "แสดง 0 ถึง 0 จาก 0 รายการ",
-              emptyTable: "ยังไม่มีไฟล์เกมในระบบ แนะนำให้อัปโหลดไฟล์แรกเลย!",
-              paginate: {
-                first: '<i class="fas fa-angle-double-left"></i>',
-                last: '<i class="fas fa-angle-double-right"></i>',
-                next: '<i class="fas fa-angle-right"></i>',
-                previous: '<i class="fas fa-angle-left"></i>'
-              }
+              emptyTable: "ยังไม่มีไฟล์เกมในระบบ"
             },
-            dom: '<"flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2"lf>rt<"flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-4"ip>',
-            pageLength: 10,
-            order: [[1, 'desc']], // เรียงตามวันที่อัปโหลดล่าสุด
-            drawCallback: function() {
-              // ปรับแต่ง style ของ pagination buttons หลัง draw
-              $('.dataTables_paginate .paginate_button').addClass('px-3 py-1.5 mx-0.5 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-100');
-            }
+            order: [[1, 'desc']]
           });
 
         } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'เกิดข้อผิดพลาด',
-            text: 'ไม่สามารถดึงข้อมูลได้: ' + (result.error || "สาเหตุไม่ทราบสาเหตุ"),
-            confirmButtonText: 'ตกลง',
-            confirmButtonColor: '#3b82f6' // blue-500
-          });
+          Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.error });
         }
       } catch (err) {
         if (showLoadingModal) loadingAlert.close();
-        Swal.fire({
-          icon: 'error',
-          title: 'เชื่อมต่อล้มเหลว',
-          text: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับ Server: ' + err.message,
-          confirmButtonText: 'ตกลง',
-          confirmButtonColor: '#3b82f6'
-        });
+        Swal.fire({ icon: 'error', title: 'เชื่อมต่อล้มเหลว', text: err.message });
       }
     }
 
@@ -251,96 +156,44 @@
       const fileInput = document.getElementById('fileInput');
       const file = fileInput.files[0];
 
-      // 1. Validation ด้วย SweetAlert2
-      if (!file) {
-        Toast.fire({
-          icon: 'warning',
-          title: 'กรุณาเลือกไฟล์ .html ก่อนครับ'
-        });
+      if (!file || !file.name.endsWith('.html')) {
+        Toast.fire({ icon: 'warning', title: 'กรุณาเลือกไฟล์ .html ก่อนครับ' });
         return;
       }
 
-      if (!file.name.endsWith('.html')) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'ไฟล์ไม่ถูกต้อง',
-          text: 'ระบบรองรับเฉพาะไฟล์นามสกุล .html เท่านั้นครับ',
-          confirmButtonText: 'เข้าใจแล้ว',
-          confirmButtonColor: '#3b82f6'
-        });
-        return;
-      }
-
-      // ปรับสถานะปุ่ม
       const btn = document.getElementById('uploadBtn');
       btn.disabled = true;
       btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>กำลังอัปโหลด...</span>`;
 
-      // แสดง Loading Modal สำหรับการอัปโหลด
-      Swal.fire({
-        title: 'กำลังอัปโหลดไฟล์...',
-        text: 'โปรดอย่าปิดหน้านี้',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading()
-        }
-      });
+      Swal.fire({ title: 'กำลังอัปโหลดไฟล์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       const reader = new FileReader();
       reader.onload = async function(e) {
-        const fileContent = e.target.result;
-        
         try {
           const response = await fetch(GAS_WEB_APP_URL, {
             method: "POST",
-            body: JSON.stringify({
-              action: "upload",
-              fileName: file.name,
-              fileContent: fileContent
-            })
+            body: JSON.stringify({ action: "upload", fileName: file.name, fileContent: e.target.result })
           });
 
           const result = await response.json();
-
-          // เคลียร์สถานะปุ่มและ Input
           btn.disabled = false;
           btn.innerHTML = `<i class="fas fa-upload"></i> <span>อัปโหลด (.html)</span>`;
           fileInput.value = '';
-          Swal.close(); // ปิด Loading modal
+          Swal.close();
 
           if (result.success) {
-            // แจ้งเตือนสำเร็จ
-            Swal.fire({
-              icon: 'success',
-              title: 'อัปโหลดสำเร็จ!',
-              text: `ไฟล์เกม "${file.name}" ถูกเพิ่มเข้าคลังเรียบร้อยแล้ว`,
-              confirmButtonText: 'เยี่ยมเลย',
-              confirmButtonColor: '#10b981' // emerald-500
-            });
-            loadGameList(false); // โหลดรายการใหม่โดยไม่ต้องขึ้น Loading modal ทับ
+            Swal.fire({ icon: 'success', title: 'อัปโหลดสำเร็จ!', confirmButtonColor: '#10b981' });
+            loadGameList(false);
           } else {
-            Swal.fire({
-              icon: 'error',
-              title: 'อัปโหลดล้มเหลว',
-              text: 'เกิดข้อผิดพลาดจาก Server: ' + result.error,
-              confirmButtonText: 'ตกลง',
-              confirmButtonColor: '#3b82f6'
-            });
+            Swal.fire({ icon: 'error', title: 'อัปโหลดล้มเหลว', text: result.error });
           }
         } catch (err) {
           btn.disabled = false;
           btn.innerHTML = `<i class="fas fa-upload"></i> <span>อัปโหลด (.html)</span>`;
           Swal.close();
-          Swal.fire({
-            icon: 'error',
-            title: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
-            text: err.message,
-            confirmButtonText: 'ตกลง',
-            confirmButtonColor: '#3b82f6'
-          });
+          Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message });
         }
       };
-
       reader.readAsText(file);
     }
   </script>
