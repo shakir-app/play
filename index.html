@@ -96,7 +96,7 @@
         <table id="gamesTable" class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-gray-50 text-gray-700">
-              <th class="py-4 px-5 font-semibold">ชื่อไฟล์เกม (คลิกเพื่อเล่น)</th>
+              <th class="py-4 px-5 font-semibold">ชื่อไฟล์เกม (คลิกเพื่อเล่นในแท็บใหม่)</th>
               <th class="py-4 px-5 font-semibold w-48">วันที่อัปโหลด</th>
             </tr>
           </thead>
@@ -112,8 +112,8 @@
     <!-- Top Bar -->
     <div class="bg-gray-800 text-white px-4 py-3 flex items-center justify-between shadow-md border-b border-gray-700">
       <div class="flex items-center gap-3">
-        <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
-          <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+        <a href="./" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+          <i class="fas fa-arrow-left"></i> หน้าหลัก
         </a>
         <h2 id="currentGameTitle" class="text-base font-semibold truncate max-w-xs md:max-w-md text-gray-200">กำลังโหลดเกม...</h2>
       </div>
@@ -148,7 +148,7 @@
       const gameId = urlParams.get('gameId');
 
       if (gameId) {
-        // มี gameId -> แสดงหน้ารันเกม
+        // มี gameId -> แสดงหน้ารันเกมทันทีในแท็บนี้
         $('#playerView').removeClass('hidden');
         loadGamePlayer(gameId);
       } else {
@@ -178,7 +178,7 @@
             title: 'เปิดเกมไม่สำเร็จ',
             text: result.error || 'ไม่สามารถโหลดไฟล์เกมได้',
             confirmButtonText: 'กลับหน้าหลัก'
-          }).then(() => { window.location.href = 'index.html'; });
+          }).then(() => { window.location.href = './'; });
         }
       } catch (err) {
         Swal.fire({
@@ -186,7 +186,7 @@
           title: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
           text: err.message,
           confirmButtonText: 'กลับหน้าหลัก'
-        }).then(() => { window.location.href = 'index.html'; });
+        }).then(() => { window.location.href = './'; });
       }
     }
 
@@ -213,15 +213,16 @@
           tbody.empty();
 
           result.data.forEach(file => {
-            // ลิงก์เล่นเกมจะต่อท้ายใน index.html เอง
             const playUrl = `?gameId=${file.id}`;
 
             tbody.append(`
               <tr class="hover:bg-blue-50/50 transition-colors">
                 <td class="py-4 px-5">
-                  <a href="${playUrl}" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-3 group">
+                  <!-- ใส่ target="_blank" เพื่อเปิดแท็บใหม่ -->
+                  <a href="${playUrl}" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-3 group">
                     <i class="fas fa-play-circle text-lg text-blue-400 group-hover:text-blue-600 transition"></i>
                     <span class="group-hover:underline">${file.name}</span>
+                    <i class="fas fa-external-link-alt text-xs text-gray-300 group-hover:text-blue-400 ml-1"></i>
                   </a>
                 </td>
                 <td class="py-4 px-5 text-gray-500 text-sm">${file.date}</td>
