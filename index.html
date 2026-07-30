@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Game Hub - ระบบจัดเก็บไฟล์เกม</title>
   
+  <!-- Google Fonts: Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,8 +21,14 @@
       },
     }
   </script>
+
+  <!-- FontAwesome 6 Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- jQuery & DataTables -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -27,13 +36,25 @@
   <style>
     .dataTables_wrapper .dataTables_length select,
     .dataTables_wrapper .dataTables_filter input {
-      border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; margin-bottom: 1rem; outline: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 1rem;
+      outline: none;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+      background: #3b82f6 !important;
+      color: white !important;
+      border: 1px solid #3b82f6 !important;
+      border-radius: 0.5rem;
     }
   </style>
 </head>
-<body class="bg-gray-50 p-4 md:p-8 min-h-screen font-sans text-gray-900">
-  
-  <div class="max-w-6xl mx-auto">
+<body class="bg-gray-50 min-h-screen font-sans text-gray-900">
+
+  <!-- ==================== VIEW 1: DASHBOARD (หน้าหลัก) ==================== -->
+  <div id="dashboardView" class="hidden p-4 md:p-8 max-w-6xl mx-auto">
+    <!-- Header -->
     <header class="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
       <div class="flex items-center gap-3">
         <div class="bg-blue-600 text-white p-3 rounded-xl shadow-md">
@@ -44,6 +65,7 @@
       <p class="text-sm text-gray-500 hidden md:block">ระบบจัดเก็บและเล่นเกมส์ออนไลน์ที่สร้างโดย AI</p>
     </header>
 
+    <!-- Upload Card -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 transition hover:shadow-md">
       <div class="flex items-center gap-3 mb-5">
         <i class="fas fa-cloud-upload-alt text-xl text-blue-500"></i>
@@ -63,6 +85,7 @@
       <p class="text-xs text-gray-400 mt-3 pl-1"><i class="fas fa-info-circle mr-1"></i> รองรับเฉพาะไฟล์นามสกุล .html ที่สร้างจาก AI เท่านั้น</p>
     </div>
 
+    <!-- Data Table Card -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
       <div class="flex items-center gap-3 mb-5">
         <i class="fas fa-list-ul text-xl text-gray-500"></i>
@@ -73,7 +96,7 @@
         <table id="gamesTable" class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-gray-50 text-gray-700">
-              <th class="py-4 px-5 font-semibold">ชื่อไฟล์เกม (คลิกเพื่อเล่นบน GitHub Pages)</th>
+              <th class="py-4 px-5 font-semibold">ชื่อไฟล์เกม (คลิกเพื่อเล่น)</th>
               <th class="py-4 px-5 font-semibold w-48">วันที่อัปโหลด</th>
             </tr>
           </thead>
@@ -83,9 +106,36 @@
     </div>
   </div>
 
+
+  <!-- ==================== VIEW 2: GAME PLAYER (หน้ารันเกมเต็มจอ) ==================== -->
+  <div id="playerView" class="hidden fixed inset-0 z-50 bg-gray-900 flex flex-col">
+    <!-- Top Bar -->
+    <div class="bg-gray-800 text-white px-4 py-3 flex items-center justify-between shadow-md border-b border-gray-700">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+          <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+        </a>
+        <h2 id="currentGameTitle" class="text-base font-semibold truncate max-w-xs md:max-w-md text-gray-200">กำลังโหลดเกม...</h2>
+      </div>
+      <button onclick="toggleFullscreen()" title="เต็มจอ" class="text-gray-400 hover:text-white px-3 py-1.5 rounded-lg border border-gray-600 hover:border-gray-400 text-sm transition flex items-center gap-2">
+        <i class="fas fa-expand"></i> <span class="hidden md:inline">เต็มจอ</span>
+      </button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="flex-1 w-full h-full relative">
+      <div id="gameLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white z-10">
+        <i class="fas fa-gamepad text-5xl text-blue-500 animate-bounce mb-4"></i>
+        <p class="text-lg font-medium">กำลังโหลดไฟล์เกม...</p>
+        <p class="text-xs text-gray-400 mt-1">ดึงข้อมูลจากระบบคลังเกม</p>
+      </div>
+      <iframe id="gameFrame" class="w-full h-full border-0"></iframe>
+    </div>
+  </div>
+
+
   <script>
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-TViIdx2ojOn6oDPISW1X00bGqfb0KtoKyJRzAYz_KusleirahN8SAWlOw75HUNC05w/exec";
-
     let tableInstance = null;
 
     const Toast = Swal.mixin({
@@ -93,9 +143,54 @@
     });
 
     $(document).ready(function() {
-      loadGameList(true);
+      // ตรวจสอบ Parameter จาก URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const gameId = urlParams.get('gameId');
+
+      if (gameId) {
+        // มี gameId -> แสดงหน้ารันเกม
+        $('#playerView').removeClass('hidden');
+        loadGamePlayer(gameId);
+      } else {
+        // ไม่มี gameId -> แสดงหน้า Dashboard หลัก
+        $('#dashboardView').removeClass('hidden');
+        loadGameList(true);
+      }
     });
 
+    // --- โหลดและเล่นเกม ---
+    async function loadGamePlayer(gameId) {
+      try {
+        const response = await fetch(`${GAS_WEB_APP_URL}?action=getGameContent&gameId=${gameId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          document.title = "กำลังเล่น: " + result.name;
+          $('#currentGameTitle').text(result.name);
+          
+          const iframe = document.getElementById('gameFrame');
+          iframe.srcdoc = result.content;
+
+          $('#gameLoading').addClass('hidden');
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'เปิดเกมไม่สำเร็จ',
+            text: result.error || 'ไม่สามารถโหลดไฟล์เกมได้',
+            confirmButtonText: 'กลับหน้าหลัก'
+          }).then(() => { window.location.href = 'index.html'; });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
+          text: err.message,
+          confirmButtonText: 'กลับหน้าหลัก'
+        }).then(() => { window.location.href = 'index.html'; });
+      }
+    }
+
+    // --- โหลดคลังเกมส์ (Dashboard) ---
     async function loadGameList(showLoadingModal = false) {
       let loadingAlert;
       if (showLoadingModal) {
@@ -118,13 +213,13 @@
           tbody.empty();
 
           result.data.forEach(file => {
-            // ลิงก์ตรงนี้จะเปิดไฟล์ play.html บน GitHub Pages เอง
-            const playUrl = `play.html?gameId=${file.id}`;
+            // ลิงก์เล่นเกมจะต่อท้ายใน index.html เอง
+            const playUrl = `?gameId=${file.id}`;
 
             tbody.append(`
               <tr class="hover:bg-blue-50/50 transition-colors">
                 <td class="py-4 px-5">
-                  <a href="${playUrl}" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-3 group">
+                  <a href="${playUrl}" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-3 group">
                     <i class="fas fa-play-circle text-lg text-blue-400 group-hover:text-blue-600 transition"></i>
                     <span class="group-hover:underline">${file.name}</span>
                   </a>
@@ -136,8 +231,9 @@
 
           tableInstance = $('#gamesTable').DataTable({
             language: {
-              search: "ค้นหาเกม:",
+              search: `<i class="fas fa-search text-gray-400 mr-1"></i> ค้นหาเกม:`,
               lengthMenu: "แสดง _MENU_ รายการ",
+              info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
               emptyTable: "ยังไม่มีไฟล์เกมในระบบ"
             },
             order: [[1, 'desc']]
@@ -152,6 +248,7 @@
       }
     }
 
+    // --- ฟังก์ชันอัปโหลดไฟล์ ---
     function uploadFile() {
       const fileInput = document.getElementById('fileInput');
       const file = fileInput.files[0];
@@ -195,6 +292,13 @@
         }
       };
       reader.readAsText(file);
+    }
+
+    // ฟังก์ชันเปิดจอใหญ่
+    function toggleFullscreen() {
+      const elem = document.getElementById('gameFrame');
+      if (elem.requestFullscreen) { elem.requestFullscreen(); }
+      else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
     }
   </script>
 </body>
