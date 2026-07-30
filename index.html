@@ -34,6 +34,12 @@
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   
   <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
     .dataTables_wrapper .dataTables_length select,
     .dataTables_wrapper .dataTables_filter input {
       border: 1px solid #e5e7eb;
@@ -107,30 +113,17 @@
   </div>
 
 
-  <!-- ==================== VIEW 2: GAME PLAYER (หน้ารันเกมเต็มจอ) ==================== -->
-  <div id="playerView" class="hidden fixed inset-0 z-50 bg-gray-900 flex flex-col">
-    <!-- Top Bar -->
-    <div class="bg-gray-800 text-white px-4 py-3 flex items-center justify-between shadow-md border-b border-gray-700">
-      <div class="flex items-center gap-3">
-        <a href="./" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
-          <i class="fas fa-arrow-left"></i> หน้าหลัก
-        </a>
-        <h2 id="currentGameTitle" class="text-base font-semibold truncate max-w-xs md:max-w-md text-gray-200">กำลังโหลดเกม...</h2>
-      </div>
-      <button onclick="toggleFullscreen()" title="เต็มจอ" class="text-gray-400 hover:text-white px-3 py-1.5 rounded-lg border border-gray-600 hover:border-gray-400 text-sm transition flex items-center gap-2">
-        <i class="fas fa-expand"></i> <span class="hidden md:inline">เต็มจอ</span>
-      </button>
+  <!-- ==================== VIEW 2: GAME PLAYER (หน้ารันเกมเต็มจอ 100% ไร้ขอบ) ==================== -->
+  <div id="playerView" class="hidden fixed inset-0 z-50 bg-gray-900 w-screen h-screen overflow-hidden">
+    <!-- Loading Screen -->
+    <div id="gameLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white z-10">
+      <i class="fas fa-gamepad text-5xl text-blue-500 animate-bounce mb-4"></i>
+      <p class="text-lg font-medium">กำลังโหลดไฟล์เกม...</p>
+      <p class="text-xs text-gray-400 mt-1">ดึงข้อมูลจากระบบคลังเกม</p>
     </div>
-
-    <!-- Game Screen -->
-    <div class="flex-1 w-full h-full relative">
-      <div id="gameLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white z-10">
-        <i class="fas fa-gamepad text-5xl text-blue-500 animate-bounce mb-4"></i>
-        <p class="text-lg font-medium">กำลังโหลดไฟล์เกม...</p>
-        <p class="text-xs text-gray-400 mt-1">ดึงข้อมูลจากระบบคลังเกม</p>
-      </div>
-      <iframe id="gameFrame" class="w-full h-full border-0"></iframe>
-    </div>
+    
+    <!-- Fullscreen Game Frame -->
+    <iframe id="gameFrame" class="w-full h-full border-0 block"></iframe>
   </div>
 
 
@@ -148,7 +141,8 @@
       const gameId = urlParams.get('gameId');
 
       if (gameId) {
-        // มี gameId -> แสดงหน้ารันเกมทันทีในแท็บนี้
+        // มี gameId -> แสดงหน้ารันเกมเต็มจอทันที
+        $('body').css('overflow', 'hidden');
         $('#playerView').removeClass('hidden');
         loadGamePlayer(gameId);
       } else {
@@ -158,35 +152,36 @@
       }
     });
 
-    // --- โหลดและเล่นเกม ---
+    // --- โหลดและเล่นเกมแบบไร้ขอบ ---
     async function loadGamePlayer(gameId) {
       try {
         const response = await fetch(`${GAS_WEB_APP_URL}?action=getGameContent&gameId=${gameId}`);
         const result = await response.json();
 
         if (result.success) {
-          document.title = "กำลังเล่น: " + result.name;
-          $('#currentGameTitle').text(result.name);
+          // ตั้งชื่อแท็บตามชื่อเกม
+          document.title = result.name;
           
           const iframe = document.getElementById('gameFrame');
           iframe.srcdoc = result.content;
 
+          // ซ่อนหน้าจอ Loading เมื่อเกมโหลดเสร็จ
           $('#gameLoading').addClass('hidden');
         } else {
           Swal.fire({
             icon: 'error',
             title: 'เปิดเกมไม่สำเร็จ',
             text: result.error || 'ไม่สามารถโหลดไฟล์เกมได้',
-            confirmButtonText: 'กลับหน้าหลัก'
-          }).then(() => { window.location.href = './'; });
+            confirmButtonText: 'ปิดหน้าต่างนี้'
+          }).then(() => { window.close(); });
         }
       } catch (err) {
         Swal.fire({
           icon: 'error',
           title: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
           text: err.message,
-          confirmButtonText: 'กลับหน้าหลัก'
-        }).then(() => { window.location.href = './'; });
+          confirmButtonText: 'ปิดหน้าต่างนี้'
+        }).then(() => { window.close(); });
       }
     }
 
@@ -218,7 +213,6 @@
             tbody.append(`
               <tr class="hover:bg-blue-50/50 transition-colors">
                 <td class="py-4 px-5">
-                  <!-- ใส่ target="_blank" เพื่อเปิดแท็บใหม่ -->
                   <a href="${playUrl}" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-3 group">
                     <i class="fas fa-play-circle text-lg text-blue-400 group-hover:text-blue-600 transition"></i>
                     <span class="group-hover:underline">${file.name}</span>
@@ -293,13 +287,6 @@
         }
       };
       reader.readAsText(file);
-    }
-
-    // ฟังก์ชันเปิดจอใหญ่
-    function toggleFullscreen() {
-      const elem = document.getElementById('gameFrame');
-      if (elem.requestFullscreen) { elem.requestFullscreen(); }
-      else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
     }
   </script>
 </body>
