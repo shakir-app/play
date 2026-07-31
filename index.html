@@ -61,14 +61,25 @@
   <!-- ==================== VIEW 1: DASHBOARD (หน้าหลัก) ==================== -->
   <div id="dashboardView" class="hidden p-4 md:p-8 max-w-6xl mx-auto">
     <!-- Header -->
-    <header class="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
       <div class="flex items-center gap-3">
         <div class="bg-blue-600 text-white p-3 rounded-xl shadow-md">
           <i class="fas fa-gamepad text-2xl"></i>
         </div>
-        <h1 class="text-3xl font-bold text-gray-950">AI Game <span class="font-light text-gray-600">Hub</span></h1>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-950">AI Game <span class="font-light text-gray-600">Hub</span></h1>
+          <p class="text-xs text-gray-500 md:hidden">ระบบจัดเก็บและเล่นเกมส์ออนไลน์ที่สร้างโดย AI</p>
+        </div>
       </div>
-      <p class="text-sm text-gray-500 hidden md:block">ระบบจัดเก็บและเล่นเกมส์ออนไลน์ที่สร้างโดย AI</p>
+      
+      <div class="flex items-center gap-3">
+        <p class="text-sm text-gray-500 hidden md:block mr-2">ระบบจัดเก็บและเล่นเกมส์ออนไลน์ที่สร้างโดย AI</p>
+        <!-- ปุ่มแอดมิน -->
+        <button onclick="promptAdminLogin()" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+          <i class="fas fa-user-shield text-yellow-400"></i>
+          <span>แอดมิน</span>
+        </button>
+      </div>
     </header>
 
     <!-- Upload Card -->
@@ -113,86 +124,117 @@
   </div>
 
 
-  <!-- ==================== VIEW 2: GAME PLAYER (หน้ารันเกมเต็มจอ 100% ไร้ขอบ) ==================== -->
+  <!-- ==================== VIEW 2: GAME PLAYER (หน้ารันเกมเต็มจอ) ==================== -->
   <div id="playerView" class="hidden fixed inset-0 z-50 bg-gray-900 w-screen h-screen overflow-hidden">
-    <!-- Loading Screen -->
     <div id="gameLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white z-10">
       <i class="fas fa-gamepad text-5xl text-blue-500 animate-bounce mb-4"></i>
       <p class="text-lg font-medium">กำลังโหลดไฟล์เกม...</p>
       <p class="text-xs text-gray-400 mt-1">ดึงข้อมูลจากระบบคลังเกม</p>
     </div>
-    
-    <!-- Fullscreen Game Frame -->
     <iframe id="gameFrame" class="w-full h-full border-0 block"></iframe>
+  </div>
+
+
+  <!-- ==================== ADMIN MODAL (หน้าต่างจัดการระบบแอดมิน) ==================== -->
+  <div id="adminModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="bg-gray-900 text-white p-5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="bg-red-500 text-white p-2 rounded-lg">
+            <i class="fas fa-tools text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold">จัดการระบบผู้ดูแล (Admin Panel)</h3>
+            <p class="text-xs text-gray-400">ลบไฟล์ที่ไม่ต้องการออกจากระบบ Drive</p>
+          </div>
+        </div>
+        <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white p-2 rounded-lg transition">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto flex-1">
+        <div class="overflow-x-auto">
+          <table id="adminGamesTable" class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50 text-gray-700">
+                <th class="py-3 px-4 font-semibold">ชื่อไฟล์เกม</th>
+                <th class="py-3 px-4 font-semibold w-40">วันที่อัปโหลด</th>
+                <th class="py-3 px-4 font-semibold w-24 text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 p-4 border-t border-gray-100 flex justify-end">
+        <button onclick="closeAdminModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-xl text-sm font-medium transition">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+
+    </div>
   </div>
 
 
   <script>
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-TViIdx2ojOn6oDPISW1X00bGqfb0KtoKyJRzAYz_KusleirahN8SAWlOw75HUNC05w/exec";
+
     let tableInstance = null;
+    let adminTableInstance = null;
+    let globalFilesData = [];
 
     const Toast = Swal.mixin({
       toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true
     });
 
     $(document).ready(function() {
-      // ตรวจสอบ Parameter จาก URL
       const urlParams = new URLSearchParams(window.location.search);
       const gameId = urlParams.get('gameId');
 
       if (gameId) {
-        // มี gameId -> แสดงหน้ารันเกมเต็มจอทันที
         $('body').css('overflow', 'hidden');
         $('#playerView').removeClass('hidden');
         loadGamePlayer(gameId);
       } else {
-        // ไม่มี gameId -> แสดงหน้า Dashboard หลัก
         $('#dashboardView').removeClass('hidden');
         loadGameList(true);
       }
     });
 
-    // --- โหลดและเล่นเกมแบบไร้ขอบ ---
+    // --- โหลดเกมเล่นเต็มจอ ---
     async function loadGamePlayer(gameId) {
       try {
         const response = await fetch(`${GAS_WEB_APP_URL}?action=getGameContent&gameId=${gameId}`);
         const result = await response.json();
 
         if (result.success) {
-          // ตั้งชื่อแท็บตามชื่อเกม
           document.title = result.name;
-          
           const iframe = document.getElementById('gameFrame');
           iframe.srcdoc = result.content;
-
-          // ซ่อนหน้าจอ Loading เมื่อเกมโหลดเสร็จ
           $('#gameLoading').addClass('hidden');
         } else {
           Swal.fire({
-            icon: 'error',
-            title: 'เปิดเกมไม่สำเร็จ',
-            text: result.error || 'ไม่สามารถโหลดไฟล์เกมได้',
-            confirmButtonText: 'ปิดหน้าต่างนี้'
+            icon: 'error', title: 'เปิดเกมไม่สำเร็จ', text: result.error || 'ไม่สามารถโหลดไฟล์เกมได้', confirmButtonText: 'ปิดหน้าต่างนี้'
           }).then(() => { window.close(); });
         }
       } catch (err) {
         Swal.fire({
-          icon: 'error',
-          title: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
-          text: err.message,
-          confirmButtonText: 'ปิดหน้าต่างนี้'
+          icon: 'error', title: 'เกิดข้อผิดพลาดในการเชื่อมต่อ', text: err.message, confirmButtonText: 'ปิดหน้าต่างนี้'
         }).then(() => { window.close(); });
       }
     }
 
-    // --- โหลดคลังเกมส์ (Dashboard) ---
+    // --- โหลดคลังเกมส์ ---
     async function loadGameList(showLoadingModal = false) {
       let loadingAlert;
       if (showLoadingModal) {
-        loadingAlert = Swal.fire({
-          title: 'กำลังโหลดคลังเกมส์...', allowOutsideClick: false,
-          didOpen: () => { Swal.showLoading() }
-        });
+        loadingAlert = Swal.fire({ title: 'กำลังโหลดคลังเกมส์...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
       }
       
       try {
@@ -202,14 +244,14 @@
         if (showLoadingModal) loadingAlert.close();
 
         if (result.success) {
-          if (tableInstance) tableInstance.destroy();
+          globalFilesData = result.data;
 
+          if (tableInstance) tableInstance.destroy();
           const tbody = $('#tableBody');
           tbody.empty();
 
           result.data.forEach(file => {
             const playUrl = `?gameId=${file.id}`;
-
             tbody.append(`
               <tr class="hover:bg-blue-50/50 transition-colors">
                 <td class="py-4 px-5">
@@ -241,6 +283,147 @@
         if (showLoadingModal) loadingAlert.close();
         Swal.fire({ icon: 'error', title: 'เชื่อมต่อล้มเหลว', text: err.message });
       }
+    }
+
+    // --- ระบบแอดมิน (เข้าสู่ระบบผ่าน Google Sheets) ---
+    function promptAdminLogin() {
+      Swal.fire({
+        title: '<i class="fas fa-user-shield text-blue-600 mb-2"></i><br>เข้าสู่ระบบแอดมิน',
+        html: `
+          <div class="flex flex-col gap-3 text-left mt-3">
+            <div>
+              <label class="text-xs text-gray-500 font-medium mb-1 block">ชื่อผู้ใช้ (Username)</label>
+              <input id="swal-username" class="swal2-input !m-0 !w-full" placeholder="Username">
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium mb-1 block">รหัสผ่าน (Password)</label>
+              <input id="swal-password" type="password" class="swal2-input !m-0 !w-full" placeholder="Password">
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'เข้าสู่ระบบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#1e293b',
+        focusConfirm: false,
+        preConfirm: async () => {
+          const username = $('#swal-username').val().trim();
+          const password = $('#swal-password').val().trim();
+
+          if (!username || !password) {
+            Swal.showValidationMessage('กรุณากรอกทั้งชื่อผู้ใช้และรหัสผ่าน');
+            return false;
+          }
+
+          try {
+            const response = await fetch(GAS_WEB_APP_URL, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'adminLogin',
+                username: username,
+                password: password
+              })
+            });
+            const res = await response.json();
+
+            if (res.success) {
+              return true;
+            } else {
+              Swal.showValidationMessage(res.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+              return false;
+            }
+          } catch (err) {
+            Swal.showValidationMessage('เชื่อมต่อล้มเหลว: ' + err.message);
+            return false;
+          }
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบแอดมินสำเร็จ' });
+          openAdminModal();
+        }
+      });
+    }
+
+    // --- เปิดหน้าต่างจัดการแอดมิน ---
+    function openAdminModal() {
+      renderAdminTable();
+      $('#adminModal').removeClass('hidden');
+    }
+
+    function closeAdminModal() {
+      $('#adminModal').addClass('hidden');
+    }
+
+    // --- แสดงตารางจัดการแอดมิน ---
+    function renderAdminTable() {
+      if (adminTableInstance) adminTableInstance.destroy();
+      const adminTbody = $('#adminTableBody');
+      adminTbody.empty();
+
+      globalFilesData.forEach(file => {
+        adminTbody.append(`
+          <tr class="hover:bg-red-50/30 transition-colors">
+            <td class="py-3 px-4 font-medium text-gray-800">${file.name}</td>
+            <td class="py-3 px-4 text-gray-500 text-sm">${file.date}</td>
+            <td class="py-3 px-4 text-center">
+              <button onclick="deleteFile('${file.id}', '${file.name}')" class="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition" title="ลบไฟล์นี้">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </td>
+          </tr>
+        `);
+      });
+
+      adminTableInstance = $('#adminGamesTable').DataTable({
+        language: {
+          search: "ค้นหา:",
+          lengthMenu: "แสดง _MENU_ รายการ",
+          info: "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+          emptyTable: "ไม่มีไฟล์ในระบบ"
+        },
+        order: [[1, 'desc']],
+        pageLength: 5
+      });
+    }
+
+    // --- ฟังก์ชันลบไฟล์ ---
+    function deleteFile(fileId, fileName) {
+      Swal.fire({
+        title: 'ยืนยันการลบไฟล์?',
+        text: `คุณต้องการลบไฟล์ "${fileName}" หรือไม่?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ลบไฟล์',
+        cancelButtonText: 'ยกเลิก'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'กำลังลบไฟล์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+          try {
+            const response = await fetch(GAS_WEB_APP_URL, {
+              method: "POST",
+              body: JSON.stringify({ action: "delete", fileId: fileId })
+            });
+
+            const resResult = await response.json();
+            Swal.close();
+
+            if (resResult.success) {
+              Toast.fire({ icon: 'success', title: 'ลบไฟล์เรียบร้อยแล้ว' });
+              await loadGameList(false);
+              renderAdminTable();
+            } else {
+              Swal.fire({ icon: 'error', title: 'ลบไฟล์ไม่สำเร็จ', text: resResult.error });
+            }
+          } catch (err) {
+            Swal.close();
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message });
+          }
+        }
+      });
     }
 
     // --- ฟังก์ชันอัปโหลดไฟล์ ---
