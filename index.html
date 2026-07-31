@@ -183,6 +183,7 @@
 
 
   <script>
+    // URL สคริปต์ Web App จาก Google Apps Script
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-TViIdx2ojOn6oDPISW1X00bGqfb0KtoKyJRzAYz_KusleirahN8SAWlOw75HUNC05w/exec";
 
     let tableInstance = null;
@@ -316,8 +317,12 @@
           }
 
           try {
+            // ใช้ Content-Type text/plain;charset=utf-8 เพื่อป้องกันปัญหา CORS Preflight
             const response = await fetch(GAS_WEB_APP_URL, {
               method: 'POST',
+              headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+              },
               body: JSON.stringify({
                 action: 'adminLogin',
                 username: username,
@@ -405,6 +410,9 @@
           try {
             const response = await fetch(GAS_WEB_APP_URL, {
               method: "POST",
+              headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+              },
               body: JSON.stringify({ action: "delete", fileId: fileId })
             });
 
@@ -447,6 +455,9 @@
         try {
           const response = await fetch(GAS_WEB_APP_URL, {
             method: "POST",
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8',
+            },
             body: JSON.stringify({ action: "upload", fileName: file.name, fileContent: e.target.result })
           });
 
